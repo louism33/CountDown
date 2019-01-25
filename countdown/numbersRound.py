@@ -5,10 +5,12 @@ it must be reached with + * / -
 
 import random
 import time
+from functools import reduce
+from operator import mul
 
 below_zeros_allowed = False
 game_time_limit = 30
-
+exact_answer_required = False
 
 class Stopper:
     def __init__(self, int):
@@ -20,11 +22,9 @@ class SumTree:
     minus = "-"
     times = "*"
     div = "/"
-    operators = []
-    operators.append(plus)
-    operators.append(minus)
-    operators.append(times)
-    operators.append(div)
+    operators = [plus, minus, times, div]
+    best_guess = 1000000
+    best_guess_string = ""
 
     def __init__(self, root_value, remaining_array=[], target=None,
                  number_node=True, parent=None, distance=0, stopper=None):
@@ -45,7 +45,7 @@ class SumTree:
                 string += "\n" + str(child)
         return string
 
-    def addChild(self, val):
+    def add_child(self, val):
         self.children.append(val)
 
     def populate_tree(self):
@@ -58,8 +58,13 @@ class SumTree:
             self.children = [self.result]
 
             if self.target is not None:
+                if (float(self.result).is_integer()
+                        and (abs(int(self.result) - self.target) < abs(SumTree.best_guess - self.target))):
+                    SumTree.best_guess = self.result
+                    SumTree.best_guess_string = self.get_result_string()
+
                 if float(self.result).is_integer() and int(self.result) == self.target:
-                    return self.get_result_string()
+                    return self.result, self.get_result_string()
 
             else:
                 if self.stopper.stop_at <= 0 and float(self.result).is_integer():
@@ -70,26 +75,31 @@ class SumTree:
 
         elif self.numberNode:
             for operator in self.operators:
-                self.addChild(SumTree(operator, self.remainingArray, number_node=False, target=self.target, parent=self,
-                                      distance=self.distance + 1, stopper=self.stopper))
+                self.add_child(SumTree(operator, self.remainingArray, number_node=False, target=self.target, parent=self,
+                                       distance=self.distance + 1, stopper=self.stopper))
 
         else:
             for remainer in self.remainingArray:
                 remainers = self.remainingArray.copy()
                 remainers.remove(remainer)
 
-                self.addChild(SumTree(remainer, remainers, target=self.target, parent=self, distance=self.distance + 1,
-                                      stopper=self.stopper))
+                self.add_child(SumTree(remainer, remainers, target=self.target, parent=self, distance=self.distance + 1,
+                                       stopper=self.stopper))
 
-    def recursivePop(self):
+
+    def recursive_pop(self):
         result = self.populate_tree()
         if result is not None:
             return result
+
         if len(self.remainingArray) > 0:
             for child in self.children:
-                result = child.recursivePop()
+                result = child.recursive_pop()
                 if result is not None:
                     return result
+
+        if self.parent is None:
+            return SumTree.best_guess, SumTree.best_guess_string
 
     def get_result(self):
         return eval(self.get_result_string())
@@ -144,7 +154,7 @@ def find_permutation(arr, objective=None):
         else:
             tree = SumTree(root_value=arr[i], remaining_array=remaining_array, target=objective)
 
-        answer = tree.recursivePop()
+        answer = tree.recursive_pop()
 
         if answer is not None:
             break
@@ -152,10 +162,17 @@ def find_permutation(arr, objective=None):
     if objective is None and tree is not None:
         return answer
 
-    if answer is not None and tree is not None:
+    if answer is not None and tree is not None and answer[0] == objective:
         print("********************************")
-        print("solution found: ")
-        print(answer + " = " + str(tree.target))
+        print("exact solution found: ")
+        print(str(answer[1]) + " = " + str(answer[0]))
+
+    elif answer is not None and tree is not None:
+        print("********************************")
+        print("could not find exact solution, but the closest I got was: ")
+        print(str(answer[1]) + " = " + str(answer[0]))
+        print("which is off by " + str(abs(objective - answer[0])))
+
     else:
         print("No combination of all inputs %a found that results in %d" % (arr, objective))
 
@@ -193,12 +210,20 @@ def main():
     arr = get_random_numbers(number_of_bigs)
     print("array is " + str(arr))
 
-    answer = find_permutation(arr)
+    if exact_answer_required:
+        answer = find_permutation(arr)
+
+    else:
+        basic_product = reduce(lambda x, y: x*y, arr, 1)
+        answer = random.randint(0, basic_product)
+
     print("score to find: " + str(answer[0]))
 
+    time.sleep(8)
+    print("ready?")
     time.sleep(2)
 
-    print("you have %d seconds!" % game_time_limit)
+    print("you have %d seconds, go!" % game_time_limit)
 
     for i in range(game_time_limit, 0, -1):
         print("%d seconds left" % i)
@@ -221,4 +246,13 @@ def main():
         exit(0)
 
 
-main()
+# main()
+
+arr = [1, 2, 3, 4, 5, 6]
+
+basic_product = reduce(lambda x, y: x * y, arr, 1)
+a = random.randint(0, basic_product)
+
+print(a)
+
+answer = find_permutation(arr, a)
