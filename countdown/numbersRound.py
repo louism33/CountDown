@@ -6,11 +6,13 @@ it must be reached with + * / -
 import random
 import time
 from functools import reduce
-from operator import mul
 
+total_numbers = 6
+default_bigs = 2
 below_zeros_allowed = False
 game_time_limit = 30
 exact_answer_required = False
+targets_under_1000 = True
 
 class Stopper:
     def __init__(self, int):
@@ -75,8 +77,9 @@ class SumTree:
 
         elif self.numberNode:
             for operator in self.operators:
-                self.add_child(SumTree(operator, self.remainingArray, number_node=False, target=self.target, parent=self,
-                                       distance=self.distance + 1, stopper=self.stopper))
+                self.add_child(
+                    SumTree(operator, self.remainingArray, number_node=False, target=self.target, parent=self,
+                            distance=self.distance + 1, stopper=self.stopper))
 
         else:
             for remainer in self.remainingArray:
@@ -85,7 +88,6 @@ class SumTree:
 
                 self.add_child(SumTree(remainer, remainers, target=self.target, parent=self, distance=self.distance + 1,
                                        stopper=self.stopper))
-
 
     def recursive_pop(self):
         result = self.populate_tree()
@@ -156,8 +158,12 @@ def find_permutation(arr, objective=None):
 
         answer = tree.recursive_pop()
 
-        if answer is not None:
-            break
+        if objective is None:
+            if answer is not None:
+                break
+        else:
+            if answer is not None and answer[0] == objective:
+                break
 
     if objective is None and tree is not None:
         return answer
@@ -206,18 +212,34 @@ def get_random_numbers(b):
 
 
 def main():
-    number_of_bigs = 2
-    arr = get_random_numbers(number_of_bigs)
-    print("array is " + str(arr))
+    global total_numbers, default_bigs
+    n = input("Out of %d, how many big numbers do you want (default is %d)?\n" % (total_numbers, default_bigs)) or 2
+    try:
+        number_of_bigs = int(n)
+        if number_of_bigs < 0 or number_of_bigs > total_numbers:
+            print("illegal number, defaulting to 2 big numbers")
+    except ValueError:
+        print("could not read your input, defaulting to 2 big numbers")
+        number_of_bigs = 2
 
+    time.sleep(2)
+    arr = get_random_numbers(number_of_bigs)
+    print("your numbers are " + str(arr))
+    time.sleep(2)
     if exact_answer_required:
         answer = find_permutation(arr)
+        print("score to find: " + str(answer[0]))
 
     else:
-        basic_product = reduce(lambda x, y: x*y, arr, 1)
-        answer = random.randint(0, basic_product)
+        basic_product = reduce(lambda x, y: x * y, arr, 1)
 
-    print("score to find: " + str(answer[0]))
+        if not targets_under_1000:
+            answer = random.randint(0, basic_product)
+        else:
+            max = min(1000, basic_product)
+            answer = random.randint(0, max)
+
+        print("score to find: " + str(answer))
 
     time.sleep(8)
     print("ready?")
@@ -227,14 +249,17 @@ def main():
 
     for i in range(game_time_limit, 0, -1):
         print("%d seconds left" % i)
-        time.sleep(1)
+        # time.sleep(1)
 
     print("time's up!")
     time.sleep(2)
     print("did you get it?")
     time.sleep(2)
-    print("the answer was of course " + str(answer[1]) + " = " + str(answer[0]) + " !")
-
+    if exact_answer_required:
+        print("the answer was of course " + str(answer[1]) + " = " + str(answer[0]) + " !")
+    else:
+        print("let me see if I can find the answer...")
+        find_permutation(arr, answer)
     time.sleep(2)
 
     a = input("Do you want to play again (with different numbers)? [Y/n]\n")
@@ -243,16 +268,10 @@ def main():
         main()
     else:
         print("bye bye!")
-        exit(0)
+        exit()
 
 
-# main()
+main()
 
-arr = [1, 2, 3, 4, 5, 6]
-
-basic_product = reduce(lambda x, y: x * y, arr, 1)
-a = random.randint(0, basic_product)
-
-print(a)
-
-answer = find_permutation(arr, a)
+# arr = [25, 100, 3, 10, 6, 8]
+# answer = find_permutation(arr, 465)
