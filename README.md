@@ -1,2 +1,2 @@
 # CountDown
-a solver for the UK TV show countdown
+an implementation of, and solver for the UK TV show countdown
