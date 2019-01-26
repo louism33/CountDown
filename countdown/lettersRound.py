@@ -16,7 +16,7 @@ def find_longest_word(array):
     longest_words_lengths = [0, 0, 0]
     remaining_letters = array[1:]
 
-    def iterative_deepening_search(current_word, remaining_letters):
+    def depth_first_search(current_word, remaining_letters):
         if d.check(current_word):
             length = len(current_word)
             if length > min(longest_words_lengths) and not current_word in longest_words:
@@ -30,12 +30,12 @@ def find_longest_word(array):
         for l in range(len(remaining_letters)):
             rem = remaining_letters[:l]
             rem += (remaining_letters[l + 1:])
-            iterative_deepening_search(current_word + remaining_letters[l], rem)
+            depth_first_search(current_word + remaining_letters[l], rem)
 
     for l in range(len(array)):
         rem = remaining_letters[:l]
         rem += (remaining_letters[l + 1:])
-        iterative_deepening_search(array[l], remaining_letters=rem)
+        depth_first_search(array[l], remaining_letters=rem)
 
     return longest_words, longest_words_lengths
 
