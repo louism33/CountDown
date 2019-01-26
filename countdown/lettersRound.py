@@ -90,7 +90,7 @@ def main():
 
     for i in range(game_time_limit, 0, -1):
         print("%d seconds left" % i)
-        # time.sleep(1)
+        time.sleep(1)
 
     print("time's up!")
     time.sleep(2)
